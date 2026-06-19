@@ -13,7 +13,6 @@ class SimConnectMobiFlight(SimConnect):
             super().__init__(auto_connect, library_path)
         else:
             super().__init__(auto_connect)
-        # Fix missing types
         self.dll.MapClientDataNameToID.argtypes = [wintypes.HANDLE, ctypes.c_char_p, SIMCONNECT_CLIENT_DATA_ID]
 
 

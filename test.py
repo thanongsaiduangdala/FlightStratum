@@ -10,7 +10,6 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 import sys
 
-# --- PYTHON 3.14 COMPATIBILITY PATCH ---
 if 'collections.Mapping' not in sys.modules:
     import collections
     if not hasattr(collections, 'Mapping'):
@@ -21,12 +20,10 @@ from SimConnect import Event
 from simconnect_mobiflight import SimConnectMobiFlight
 from mobiflight_variable_requests import MobiFlightVariableRequests
 
-# --- GLOBALS ---
 sm = None
 mf = None
 event_cache = {}
 
-# --- COMMUNITY FOLDER SETUP ---
 COMMUNITY_DIR = "community_folder"
 os.makedirs(COMMUNITY_DIR, exist_ok=True)
 
@@ -50,7 +47,6 @@ async def lifespan(app: FastAPI):
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(_quiet_proactor_exception_handler)
 
-    #print("Initializing SimConnect + MobiFlight...")
     try:
         sm = SimConnectMobiFlight()
         mf = MobiFlightVariableRequests(sm)
@@ -70,7 +66,6 @@ app = FastAPI(lifespan=lifespan)  # ← only one definition, with lifespan attac
 
 app.mount("/fonts", StaticFiles(directory="fonts"), name="fonts")
 
-# --- INPUT HANDLING ---
 def execute_action(event_name: str):
     if not event_name or not event_name.strip():
         return
@@ -78,17 +73,14 @@ def execute_action(event_name: str):
     try:
         if any(char in event_name for char in ["(", ")", ">", " "]):
             if mf:
-               #print(f"[ACTION] Sending RPN via mf.set: {event_name[:60]}")
                 mf.set(event_name)
         else:
             if event_name not in event_cache:
-               #print(f"Mapping new native event: {event_name}")
                 event_cache[event_name] = Event(bytes(event_name, "utf-8"), sm)
             event_cache[event_name]()
     except Exception as e:
        print(f"Action Error: {e}")
 
-# --- OUTPUT HANDLING ---
 def read_output(rpn: str) -> float:
     global mf
     try:
@@ -109,7 +101,6 @@ def _safe_json_path(filename: str) -> str:
     return os.path.join(COMMUNITY_DIR, safe_name)
 
 def get_base_dir():
-    # When frozen by PyInstaller, use the exe's folder, not the temp extraction dir
     if getattr(sys, 'frozen', False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
@@ -197,7 +188,6 @@ async def websocket_endpoint(websocket: WebSocket):
         update_task.cancel()
 
 def get_base_dir():
-    # When frozen by PyInstaller, use the exe's folder, not the temp extraction dir
     if getattr(sys, 'frozen', False):
         return os.path.dirname(sys.executable)
     return os.path.dirname(os.path.abspath(__file__))
@@ -206,7 +196,6 @@ BASE_DIR = get_base_dir()
 
 app.mount("/fonts", StaticFiles(directory=os.path.join(BASE_DIR, "fonts")), name="fonts")
 
-# after
 @app.get("/flight_stratum_icon_only.ico")
 def get_favicon():
     return FileResponse(os.path.join(BASE_DIR, "flight_stratum_icon_only.ico"))
