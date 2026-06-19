@@ -1,0 +1,54 @@
+{
+  "colorPresets": [
+    {
+      "id": "mqaqeluo8msn",
+      "name": "Orange BackLight",
+      "hex": "#FFA500"
+    },
+    {
+      "id": "mqaqfhqiml1u",
+      "name": "Black",
+      "hex": "#000000"
+    },
+    {
+      "id": "mqaqfyfqhlvi",
+      "name": "White",
+      "hex": "#ffffff"
+    },
+    {
+      "id": "mqb50xyevj34",
+      "name": "RED",
+      "hex": "#ff0000"
+    },
+    {
+      "id": "mqb51hivnjmy",
+      "name": "FAULTLightOffColor",
+      "hex": "#141414"
+    },
+    {
+      "id": "mqb52y0g8iiu",
+      "name": "Gray50",
+      "hex": "#323232"
+    },
+    {
+      "id": "mqb53vw1yp22",
+      "name": "BLUE",
+      "hex": "#0000ff"
+    },
+    {
+      "id": "mqb5bjhg2b41",
+      "name": "GRAY200",
+      "hex": "#c8c8c8"
+    },
+    {
+      "id": "mqcduvq9derp",
+      "name": "GREEN",
+      "hex": "#00ff00"
+    },
+    {
+      "id": "mqcegbvmprws",
+      "name": "DarkerOrange",
+      "hex": "#b77000"
+    }
+  ]
+}
