@@ -1,0 +1,31 @@
+#BTN {
+    width: 100px;
+    height: 100px;
+    background-color: black;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#TopLBL {
+    color: red;
+    display: flex;
+    justify-content: center;
+    font-weight: bold;
+    align-items: center;
+    font-family: 'B612', sans-serif;
+}
+
+#BottomLBL {
+    color: rgb(51, 51, 51);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'B612', sans-serif;
+    font-weight: bold;
+    border: 1px solid rgb(51, 51, 51);
+    margin-top: 15px;
+    padding: 5px 20px;
+}

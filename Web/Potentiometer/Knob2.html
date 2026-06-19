@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MobiFlight Custom Arc Builder</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a2229;
+            color: #e1e5e8;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        /* Left Control Panel Slider Sidebar */
+        
+        .control-panel {
+            width: 340px;
+            background-color: #131a1f;
+            border-right: 2px solid #2c373e;
+            padding: 25px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        
+        .control-panel h2 {
+            margin-top: 0;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #FFA500;
+            border-bottom: 1px solid #2c373e;
+            padding-bottom: 10px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .input-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #a2aab0;
+        }
+        
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            accent-color: #FFA500;
+        }
+        /* Editable Input Text Fields */
+        
+        .value-input {
+            width: 70px;
+            text-align: right;
+            font-family: monospace;
+            font-size: 14px;
+            background: #232d34;
+            border: 1px solid #3a4750;
+            padding: 4px 6px;
+            border-radius: 4px;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        
+        .value-input:focus {
+            outline: none;
+            border-color: #FFA500;
+            background: #2a3740;
+        }
+        /* Hides default up/down arrows natively and with prefixes */
+        
+        .value-input::-webkit-outer-spin-button,
+        .value-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+        }
+        
+        .value-input {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        /* Right Preview Canvas Area */
+        
+        .preview-canvas {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .component-wrapper {
+            position: relative;
+            width: 260px;
+            height: 260px;
+        }
+        /* The SVG Canvas */
+        
+        .dynamic-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        /* The Custom Spade Knob centered */
+        
+        .knob-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 160px;
+            height: 160px;
+        }
+        
+        .knob-base-disc {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 130px;
+            height: 130px;
+            background: radial-gradient(circle at 35% 35%, #e1e5e8 0%, #b0b8bd 70%, #838b91 100%);
+            border-radius: 50%;
+            box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.6), 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .spade-pointer-body {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 64px;
+            height: 115px;
+            background: linear-gradient(90deg, #9ca5aa 0%, #dcdfe1 30%, #eef1f2 50%, #ccd1d4 70%, #858e94 100%);
+            clip-path: polygon(50% 0%, 100% 28%, 100% 90%, 85% 100%, 15% 100%, 0% 90%, 0% 28%);
+            display: flex;
+            justify-content: center;
+        }
+        
+        .spade-pointer-body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 32px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(0, 0, 0, 0.15) 100%);
+            clip-path: polygon(50% 0%, 100% 28%, 50% 100%, 0% 28%);
+        }
+        
+        .indicator-groove {
+            position: absolute;
+            top: 12px;
+            width: 5px;
+            height: 60px;
+            background: linear-gradient(90deg, #FFA500 0%, #FFA500 50%, #FFA500 100%);
+            box-shadow: inset 0 2px 3px #FFA500, 0 6px 12px #FFA500;
+            border-radius: 1px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="control-panel">
+        <h2>Arc Settings</h2>
+
+        <div class="input-group">
+            <label for="startAngle">Start Angle (°)</label>
+            <div class="input-row">
+                <input type="range" id="startAngle" min="-360" max="360" value="45">
+                <input type="number" id="startDisp" class="value-input" min="-360" max="360" value="45">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="endAngle">End Angle (°)</label>
+            <div class="input-row">
+                <input type="range" id="endAngle" min="-360" max="360" value="225">
+                <input type="number" id="endDisp" class="value-input" min="-360" max="360" value="225">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="tickCount">Lines Pointed Out (Ticks)</label>
+            <div class="input-row">
+                <input type="range" id="tickCount" min="2" max="20" value="3">
+                <input type="number" id="tickDisp" class="value-input" min="2" max="20" value="3">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="tickLength">Line Length (px)</label>
+            <div class="input-row">
+                <input type="range" id="tickLength" min="2" max="40" value="12">
+                <input type="number" id="lengthDisp" class="value-input" min="2" max="40" value="12">
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-canvas">
+        <div class="component-wrapper">
+
+            <svg class="dynamic-svg" id="gaugeSvg" viewBox="0 0 260 260">
+                <defs>
+                    <filter id="orange-glow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="3" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+                
+                <path id="arcPath" fill="none" stroke="#FFA500" stroke-width="3" stroke-linecap="round" filter="url(#orange-glow)" />
+                
+                <g id="ticksGroup" stroke="#FFA500" stroke-width="3" stroke-linecap="round" filter="url(#orange-glow)"></g>
+            </svg>
+
+            <div class="knob-container">
+                <div class="knob-base-disc"></div>
+                <div class="spade-pointer-body">
+                    <div class="indicator-groove"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Get references to HTML Inputs
+        const startInput = document.getElementById('startAngle');
+        const endInput = document.getElementById('endAngle');
+        const tickInput = document.getElementById('tickCount');
+        const lengthInput = document.getElementById('tickLength');
+
+        const startDisp = document.getElementById('startDisp');
+        const endDisp = document.getElementById('endDisp');
+        const tickDisp = document.getElementById('tickDisp');
+        const lengthDisp = document.getElementById('lengthDisp');
+
+        const arcPath = document.getElementById('arcPath');
+        const ticksGroup = document.getElementById('ticksGroup');
+
+        const centerX = 130;
+        const centerY = 130;
+        const radius = 80;
+
+        function customAngleToRadians(degree) {
+            let normalizedDegree = ((degree % 360) + 360) % 360;
+            let standardDegree = normalizedDegree + 180;
+            return (standardDegree * Math.PI) / 180;
+        }
+
+        function updateGauge(startDeg, endDeg, ticks, currentTickLength) {
+            // --- 1. RENDER ARCS ---
+            const startRad = customAngleToRadians(startDeg);
+            const endRad = customAngleToRadians(endDeg);
+
+            const x1 = centerX + radius * Math.cos(startRad);
+            const y1 = centerY + radius * Math.sin(startRad);
+            const x2 = centerX + radius * Math.cos(endRad);
+            const y2 = centerY + radius * Math.sin(endRad);
+
+            let normStart = ((startDeg % 360) + 360) % 360;
+            let normEnd = ((endDeg % 360) + 360) % 360;
+            let angleDiff = normEnd - normStart;
+            if (angleDiff < 0) angleDiff += 360;
+
+            const largeArcFlag = angleDiff > 180 ? 1 : 0;
+
+            if (angleDiff === 0 && startDeg !== endDeg) {
+                arcPath.setAttribute('d', `M ${centerX - radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX + radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX - radius} ${centerY}`);
+            } else {
+                arcPath.setAttribute('d', `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`);
+            }
+
+            // --- 2. GENERATE POINTED LINES ---
+            ticksGroup.innerHTML = "";
+
+            if (ticks > 1) {
+                for (let i = 0; i < ticks; i++) {
+                    let currentDeg = startDeg + ((endDeg - startDeg) * (i / (ticks - 1)));
+                    let currentRad = customAngleToRadians(currentDeg);
+
+                    const innerX = centerX + radius * Math.cos(currentRad);
+                    const innerY = centerY + radius * Math.sin(currentRad);
+                    const outerX = centerX + (radius + currentTickLength) * Math.cos(currentRad);
+                    const outerY = centerY + (radius + currentTickLength) * Math.sin(currentRad);
+
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", innerX);
+                    line.setAttribute("y1", innerY);
+                    line.setAttribute("x2", outerX);
+                    line.setAttribute("y2", outerY);
+
+                    ticksGroup.appendChild(line);
+                }
+            }
+        }
+
+        // Synchronize engine when a slider is dragged
+        function syncFromSliders() {
+            const start = parseFloat(startInput.value);
+            const end = parseFloat(endInput.value);
+            const ticks = parseInt(tickInput.value);
+            const length = parseInt(lengthInput.value);
+
+            startDisp.value = start;
+            endDisp.value = end;
+            tickDisp.value = ticks;
+            lengthDisp.value = length;
+
+            updateGauge(start, end, ticks, length);
+        }
+
+        // Synchronize engine when values are directly typed
+        function syncFromInputs() {
+            const start = isNaN(parseFloat(startDisp.value)) ? 0 : parseFloat(startDisp.value);
+            const end = isNaN(parseFloat(endDisp.value)) ? 0 : parseFloat(endDisp.value);
+            const ticks = isNaN(parseInt(tickDisp.value)) ? 2 : parseInt(tickDisp.value);
+            const length = isNaN(parseInt(lengthDisp.value)) ? 0 : parseInt(lengthDisp.value);
+
+            startInput.value = start;
+            endInput.value = end;
+            tickInput.value = ticks;
+            lengthInput.value = length;
+
+            updateGauge(start, end, ticks, length);
+        }
+
+        // Event listener bindings
+        startInput.addEventListener('input', syncFromSliders);
+        endInput.addEventListener('input', syncFromSliders);
+        tickInput.addEventListener('input', syncFromSliders);
+        lengthInput.addEventListener('input', syncFromSliders);
+
+        startDisp.addEventListener('input', syncFromInputs);
+        endDisp.addEventListener('input', syncFromInputs);
+        tickDisp.addEventListener('input', syncFromInputs);
+        lengthDisp.addEventListener('input', syncFromInputs);
+
+        // Run initial configuration draw
+        syncFromSliders();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MSFS MobiFlight Custom Gauge Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=B612&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: black;
+            color: #e1e5e8;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        /* Left Side Control Panel Sidebar */
+        
+        .control-panel {
+            width: 340px;
+            background-color: #131a1f;
+            border-right: 2px solid #2c373e;
+            padding: 25px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        
+        .control-panel h2 {
+            margin-top: 0;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #FFA500;
+            border-bottom: 1px solid #2c373e;
+            padding-bottom: 10px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .input-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #a2aab0;
+        }
+        
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            accent-color: #FFA500;
+        }
+        /* Editable Input Text/Number Fields */
+        
+        .value-input {
+            width: 70px;
+            text-align: right;
+            font-family: monospace;
+            font-size: 14px;
+            background: #232d34;
+            border: 1px solid #3a4750;
+            padding: 4px 6px;
+            border-radius: 4px;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        
+        .value-input:focus {
+            outline: none;
+            border-color: #FFA500;
+            background: #2a3740;
+        }
+        /* Hides default up/down arrows natively and with prefixes */
+        
+        .value-input::-webkit-outer-spin-button,
+        .value-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+        }
+        
+        .value-input {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        /* Right Preview Canvas Area */
+        
+        .preview-canvas {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        .component-wrapper {
+            position: relative;
+            width: 260px;
+            height: 260px;
+        }
+        /* The SVG Layer wrapping around the knob */
+        
+        .arrow-arc {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            filter: drop-shadow(0 0 0.5px #FFA500) drop-shadow(0 0 1px #FFA500) drop-shadow(0 0 4px #FFA500);
+        }
+        /* Knob Elements Styling */
+        
+        .knob-outer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, #b8bfc4 0%, #878f96 100%);
+            border-radius: 50%;
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.4), 0 8px 16px rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .knob-ridges {
+            position: absolute;
+            width: 112px;
+            height: 112px;
+            border-radius: 50%;
+            background: conic-gradient( from 0deg, #FFA500 0deg 8deg, #9ca4a9 8deg 16deg, #50585e 16deg 24deg, #9ca4a9 24deg 32deg, #50585e 32deg 40deg, #9ca4a9 40deg 48deg, #50585e 48deg 56deg, #9ca4a9 56deg 64deg, #50585e 64deg 72deg, #9ca4a9 72deg 80deg, #50585e 80deg 88deg, #9ca4a9 88deg 96deg, #50585e 96deg 104deg, #9ca4a9 104deg 112deg, #50585e 112deg 120deg, #9ca4a9 120deg 128deg, #50585e 128deg 136deg, #9ca4a9 136deg 144deg, #50585e 144deg 152deg, #9ca4a9 152deg 160deg, #50585e 160deg 168deg, #9ca4a9 168deg 176deg, #50585e 176deg 184deg, #9ca4a9 184deg 192deg, #50585e 192deg 200deg, #9ca4a9 200deg 208deg, #50585e 208deg 216deg, #9ca4a9 216deg 224deg, #50585e 224deg 232deg, #9ca4a9 232deg 240deg, #50585e 240deg 248deg, #9ca4a9 248deg 256deg, #50585e 256deg 264deg, #9ca4a9 264deg 272deg, #50585e 272deg 280deg, #9ca4a9 280deg 288deg, #50585e 288deg 296deg, #9ca4a9 296deg 304deg, #50585e 304deg 312deg, #9ca4a9 312deg 320deg, #50585e 320deg 328deg, #9ca4a9 328deg 336deg, #50585e 336deg 344deg, #9ca4a9 344deg 352deg, #FFA500 352deg 360deg);
+        }
+        
+        .knob-face {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            background: radial-gradient(circle, #cbd1d4 0%, #929ba1 100%);
+            border-radius: 50%;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6), 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .knob-pointer {
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 5px;
+            height: 52px;
+            background-color: #FFA500;
+            border-radius: 2px;
+            box-shadow: 0 0 0.5px #FFA500, 0 0 1px #FFA500, 0 0 5px #FFA500;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="control-panel">
+        <h2>Arc Settings</h2>
+
+        <div class="input-group">
+            <label for="startAngle">Start Angle (°)</label>
+            <div class="input-row">
+                <input type="range" id="startAngle" min="-360" max="360" value="45">
+                <input type="number" id="startDisp" class="value-input" min="-360" max="360" value="45">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="endAngle">End Angle (°)</label>
+            <div class="input-row">
+                <input type="range" id="endAngle" min="-360" max="360" value="225">
+                <input type="number" id="endDisp" class="value-input" min="-360" max="360" value="225">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="arrowSize">Arrow Head Size</label>
+            <div class="input-row">
+                <input type="range" id="arrowSize" min="3" max="15" value="7">
+                <input type="number" id="sizeDisp" class="value-input" min="3" max="15" value="7">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="tickCount">Lines Pointed Out (Ticks)</label>
+            <div class="input-row">
+                <input type="range" id="tickCount" min="0" max="15" value="0">
+                <input type="number" id="tickDisp" class="value-input" min="0" max="15" value="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-canvas">
+        <div class="component-wrapper">
+
+            <svg class="arrow-arc" id="gaugeSvg" viewBox="0 0 260 260">
+                <defs>
+                    <marker id="panel-arrow" viewBox="0 0 10 10" refX="2" refY="5" 
+                            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                        <path d="M 0 1 L 10 5 L 0 9 z" fill="#FFA500" />
+                    </marker>
+                </defs>
+                
+                <path id="arcPath" fill="none" stroke="#FFA500" stroke-width="3" stroke-linecap="round" marker-end="url(#panel-arrow)" />
+                <g id="ticksGroup" stroke="#FFA500" stroke-width="3" stroke-linecap="round"></g>
+            </svg>
+
+            <div class="knob-outer">
+                <div class="knob-ridges"></div>
+                <div class="knob-face">
+                    <div class="knob-pointer"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Get references to HTML Range Sliders
+        const startInput = document.getElementById('startAngle');
+        const endInput = document.getElementById('endAngle');
+        const sizeInput = document.getElementById('arrowSize');
+        const tickInput = document.getElementById('tickCount');
+
+        // Get references to HTML Number Fields
+        const startDisp = document.getElementById('startDisp');
+        const endDisp = document.getElementById('endDisp');
+        const sizeDisp = document.getElementById('sizeDisp');
+        const tickDisp = document.getElementById('tickDisp');
+
+        const arcPath = document.getElementById('arcPath');
+        const arrowMarker = document.getElementById('panel-arrow');
+        const ticksGroup = document.getElementById('ticksGroup');
+
+        const centerX = 130;
+        const centerY = 130;
+        const radius = 78;
+        const tickLength = 10;
+
+        // Handles wrapping negative values smoothly into safe positive angles
+        function customAngleToRadians(degree) {
+            let normalizedDegree = ((degree % 360) + 360) % 360;
+            let standardDegree = normalizedDegree + 180;
+            return (standardDegree * Math.PI) / 180;
+        }
+
+        function updateGauge(startDeg, endDeg, arrowSize, ticks) {
+            arrowMarker.setAttribute("markerWidth", arrowSize);
+            arrowMarker.setAttribute("markerHeight", arrowSize);
+
+            const startRad = customAngleToRadians(startDeg);
+            const endRad = customAngleToRadians(endDeg);
+
+            const x1 = centerX + radius * Math.cos(startRad);
+            const y1 = centerY + radius * Math.sin(startRad);
+            const x2 = centerX + radius * Math.cos(endRad);
+            const y2 = centerY + radius * Math.sin(endRad);
+
+            // Compute safe difference path calculation
+            let normStart = ((startDeg % 360) + 360) % 360;
+            let normEnd = ((endDeg % 360) + 360) % 360;
+            let angleDiff = normEnd - normStart;
+            if (angleDiff < 0) angleDiff += 360;
+
+            const largeArcFlag = angleDiff > 180 ? 1 : 0;
+
+            if (angleDiff === 0 && startDeg !== endDeg) {
+                // Perfect closed circle edge case handling
+                arcPath.setAttribute('d', `M ${centerX - radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX + radius} ${centerY} A ${radius} ${radius} 0 1 1 ${centerX - radius} ${centerY}`);
+            } else {
+                arcPath.setAttribute('d', `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`);
+            }
+
+            // --- TICK DESIGN LOOP ---
+            ticksGroup.innerHTML = "";
+
+            if (ticks > 0) {
+                for (let i = 0; i < ticks; i++) {
+                    let stepFactor = ticks === 1 ? 0.5 : i / (ticks - 1);
+
+                    // Trace paths matching raw degree differences
+                    let currentDeg = startDeg + ((endDeg - startDeg) * stepFactor);
+                    let currentRad = customAngleToRadians(currentDeg);
+
+                    const innerX = centerX + radius * Math.cos(currentRad);
+                    const innerY = centerY + radius * Math.sin(currentRad);
+                    const outerX = centerX + (radius + tickLength) * Math.cos(currentRad);
+                    const outerY = centerY + (radius + tickLength) * Math.sin(currentRad);
+
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", innerX);
+                    line.setAttribute("y1", innerY);
+                    line.setAttribute("x2", outerX);
+                    line.setAttribute("y2", outerY);
+
+                    ticksGroup.appendChild(line);
+                }
+            }
+        }
+
+        // Synchronize engine when a slider is dragged
+        function syncFromSliders() {
+            const start = parseFloat(startInput.value);
+            const end = parseFloat(endInput.value);
+            const size = parseInt(sizeInput.value);
+            const ticks = parseInt(tickInput.value);
+
+            startDisp.value = start;
+            endDisp.value = end;
+            sizeDisp.value = size;
+            tickDisp.value = ticks;
+
+            updateGauge(start, end, size, ticks);
+        }
+
+        // Synchronize engine when values are directly typed
+        function syncFromInputs() {
+            const start = isNaN(parseFloat(startDisp.value)) ? 0 : parseFloat(startDisp.value);
+            const end = isNaN(parseFloat(endDisp.value)) ? 0 : parseFloat(endDisp.value);
+            const size = isNaN(parseInt(sizeDisp.value)) ? 3 : parseInt(sizeDisp.value);
+            const ticks = isNaN(parseInt(tickDisp.value)) ? 0 : parseInt(tickDisp.value);
+
+            startInput.value = start;
+            endInput.value = end;
+            sizeInput.value = size;
+            tickInput.value = ticks;
+
+            updateGauge(start, end, size, ticks);
+        }
+
+        // Event listener hooks for range sliders
+        startInput.addEventListener('input', syncFromSliders);
+        endInput.addEventListener('input', syncFromSliders);
+        sizeInput.addEventListener('input', syncFromSliders);
+        tickInput.addEventListener('input', syncFromSliders);
+
+        // Event listener hooks for keyboard fields
+        startDisp.addEventListener('input', syncFromInputs);
+        endDisp.addEventListener('input', syncFromInputs);
+        sizeDisp.addEventListener('input', syncFromInputs);
+        tickDisp.addEventListener('input', syncFromInputs);
+
+        // Draw initial setup layout
+        syncFromSliders();
+    </script>
+</body>
+
+</html>

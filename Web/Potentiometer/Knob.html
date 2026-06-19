@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MSFS MobiFlight Custom Gauge & Knob Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=B612&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: black;
+            color: #e1e5e8;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+        /* Left Side Control Panel Sidebar */
+        
+        .control-panel {
+            width: 340px;
+            background-color: #131a1f;
+            border-right: 2px solid #2c373e;
+            padding: 25px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+        }
+        
+        .control-panel h2 {
+            margin-top: 0;
+            font-size: 18px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #FFA500;
+            border-bottom: 1px solid #2c373e;
+            padding-bottom: 10px;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .input-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #a2aab0;
+        }
+        
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            accent-color: #FFA500;
+        }
+        /* Editable Input Text/Number Fields */
+        
+        .value-input {
+            width: 70px;
+            text-align: right;
+            font-family: monospace;
+            font-size: 14px;
+            background: #232d34;
+            border: 1px solid #3a4750;
+            padding: 4px 6px;
+            border-radius: 4px;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        
+        .value-input:focus {
+            outline: none;
+            border-color: #FFA500;
+            background: #2a3740;
+        }
+        /* Hides default up/down arrows */
+        
+        .value-input::-webkit-outer-spin-button,
+        .value-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            appearance: none;
+            margin: 0;
+        }
+        
+        .value-input {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        /* Right Preview Canvas Area */
+        
+        .preview-canvas {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-color: #1a2229;
+        }
+        /* Tab Controls in top-right corner */
+        
+        .tab-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #131a1f;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #2c373e;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            z-index: 20;
+        }
+        
+        .tab-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .tab-group-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #a2aab0;
+            letter-spacing: 0.5px;
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        
+        .tab-btn-row {
+            display: flex;
+            background: #232d34;
+            border-radius: 4px;
+            padding: 2px;
+        }
+        
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: #a2aab0;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s;
+            flex: 1;
+            white-space: nowrap;
+        }
+        
+        .tab-btn.active {
+            background: #FFA500;
+            color: #000;
+        }
+        
+        .component-wrapper {
+            position: relative;
+            width: 260px;
+            height: 260px;
+        }
+        /* SVGs Layers wrapping around the knob */
+        
+        .dynamic-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        /* Filter setup for Knob 1 and Knob 2 */
+        
+        .arrow-arc-style {
+            filter: drop-shadow(0 0 0.5px #FFA500) drop-shadow(0 0 1px #FFA500) drop-shadow(0 0 4px #FFA500);
+        }
+        /* Hide conditional elements by default via JS classes */
+        
+        .hidden {
+            display: none !important;
+        }
+        /* Knob 1 Elements Styling */
+        
+        .knob-outer {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            background: radial-gradient(circle, #b8bfc4 0%, #878f96 100%);
+            border-radius: 50%;
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.4), 0 8px 16px rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: grab;
+        }
+        
+        .knob-outer:active {
+            cursor: grabbing;
+        }
+        
+        .knob-ridges {
+            position: absolute;
+            width: 112px;
+            height: 112px;
+            border-radius: 50%;
+            background: conic-gradient( from 0deg, #FFA500 0deg 8deg, #9ca4a9 8deg 16deg, #50585e 16deg 24deg, #9ca4a9 24deg 32deg, #50585e 32deg 40deg, #9ca4a9 40deg 48deg, #50585e 48deg 56deg, #9ca4a9 56deg 64deg, #50585e 64deg 72deg, #9ca4a9 72deg 80deg, #50585e 80deg 88deg, #9ca4a9 88deg 96deg, #50585e 96deg 104deg, #9ca4a9 104deg 112deg, #50585e 112deg 120deg, #9ca4a9 120deg 128deg, #50585e 128deg 136deg, #9ca4a9 136deg 144deg, #50585e 144deg 152deg, #9ca4a9 152deg 160deg, #50585e 160deg 168deg, #9ca4a9 168deg 176deg, #50585e 176deg 184deg, #9ca4a9 184deg 192deg, #50585e 192deg 200deg, #9ca4a9 200deg 208deg, #50585e 208deg 216deg, #9ca4a9 216deg 224deg, #50585e 224deg 232deg, #9ca4a9 232deg 240deg, #50585e 240deg 248deg, #9ca4a9 248deg 256deg, #50585e 256deg 264deg, #9ca4a9 264deg 272deg, #50585e 272deg 280deg, #9ca4a9 280deg 288deg, #50585e 288deg 296deg, #9ca4a9 296deg 304deg, #50585e 304deg 312deg, #9ca4a9 312deg 320deg, #50585e 320deg 328deg, #9ca4a9 328deg 336deg, #50585e 336deg 344deg, #9ca4a9 344deg 352deg, #FFA500 352deg 360deg);
+        }
+        
+        .knob-face {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            background: radial-gradient(circle, #cbd1d4 0%, #929ba1 100%);
+            border-radius: 50%;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6), 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .knob-pointer {
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 5px;
+            height: 52px;
+            background-color: #FFA500;
+            border-radius: 2px;
+            box-shadow: 0 0 0.5px #FFA500, 0 0 1px #FFA500, 0 0 5px #FFA500;
+        }
+        /* Knob 2 Elements Styling */
+        
+        .knob-container-spade {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 160px;
+            height: 160px;
+            cursor: grab;
+        }
+        
+        .knob-container-spade:active {
+            cursor: grabbing;
+        }
+        
+        .knob-base-disc {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 130px;
+            height: 130px;
+            background: radial-gradient(circle at 35% 35%, #e1e5e8 0%, #b0b8bd 70%, #838b91 100%);
+            border-radius: 50%;
+            box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.6), 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .spade-pointer-body {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(0deg);
+            width: 64px;
+            height: 115px;
+            background: linear-gradient(90deg, #9ca5aa 0%, #dcdfe1 30%, #eef1f2 50%, #ccd1d4 70%, #858e94 100%);
+            clip-path: polygon(50% 0%, 100% 28%, 100% 90%, 85% 100%, 15% 100%, 0% 90%, 0% 28%);
+            display: flex;
+            justify-content: center;
+        }
+        
+        .spade-pointer-body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 32px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(0, 0, 0, 0.15) 100%);
+            clip-path: polygon(50% 0%, 100% 28%, 50% 100%, 0% 28%);
+        }
+        
+        .indicator-groove {
+            position: absolute;
+            top: 12px;
+            width: 5px;
+            height: 60px;
+            background: linear-gradient(90deg, #FFA500 0%, #FFA500 50%, #FFA500 100%);
+            box-shadow: inset 0 2px 3px #FFA500, 0 6px 12px #FFA500;
+            border-radius: 1px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="control-panel">
+        <h2>Arc Settings</h2>
+
+        <div class="input-group">
+            <label for="startAngle">Start Angle (°)</label>
+            <div class="input-row">
+                <input type="range" id="startAngle" min="-360" max="360" value="45">
+                <input type="number" id="startDisp" class="value-input" min="-360" max="360" value="45">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="endAngle">End Angle (°)</label>
+            <div class="input-row">
+                <input type="range" id="endAngle" min="-360" max="360" value="225">
+                <input type="number" id="endDisp" class="value-input" min="-360" max="360" value="225">
+            </div>
+        </div>
+
+        <div class="input-group" id="arrowSizeGroup">
+            <label for="arrowSize">Arrow Head Size</label>
+            <div class="input-row">
+                <input type="range" id="arrowSize" min="3" max="15" value="7">
+                <input type="number" id="sizeDisp" class="value-input" min="3" max="15" value="7">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="tickCount">Lines Pointed Out (Ticks)</label>
+            <div class="input-row">
+                <input type="range" id="tickCount" min="0" max="20" value="5">
+                <input type="number" id="tickDisp" class="value-input" min="0" max="20" value="5">
+            </div>
+        </div>
+
+        <div class="input-group id-conditional" id="tickLengthGroup">
+            <label for="tickLength">Line Length (px)</label>
+            <div class="input-row">
+                <input type="range" id="tickLength" min="2" max="40" value="12">
+                <input type="number" id="lengthDisp" class="value-input" min="2" max="40" value="12">
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-container">
+        <div class="tab-group">
+            <div class="tab-group-title">Arc Style</div>
+            <div class="tab-btn-row">
+                <button class="tab-btn active" id="btnArcArrow" onclick="setArcStyle('arrow')">Arrow Arc</button>
+                <button class="tab-btn" id="btnArcGlow" onclick="setArcStyle('glow')">Glow Arc</button>
+            </div>
+        </div>
+        <div class="tab-group">
+            <div class="tab-group-title">Knob Variant</div>
+            <div class="tab-btn-row">
+                <button class="tab-btn active" id="btnKnobRidged" onclick="setKnobStyle('ridged')">Ridged</button>
+                <button class="tab-btn" id="btnKnobSpade" onclick="setKnobStyle('spade')">Spade Pointer</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-canvas" id="canvasArea">
+        <div class="component-wrapper">
+
+            <svg class="dynamic-svg arrow-arc-style" id="gaugeSvg" viewBox="0 0 260 260">
+                <defs>
+                    <marker id="panel-arrow" viewBox="0 0 10 10" refX="2" refY="5" 
+                            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                        <path d="M 0 1 L 10 5 L 0 9 z" fill="#FFA500" />
+                    </marker>
+                    <filter id="orange-glow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feGaussianBlur stdDeviation="3" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+                
+                <path id="arcPath" fill="none" stroke="#FFA500" stroke-width="3" stroke-linecap="round" marker-end="url(#panel-arrow)" />
+                <g id="ticksGroup" stroke="#FFA500" stroke-width="3" stroke-linecap="round"></g>
+            </svg>
+
+            <div class="knob-outer" id="knobRidgedContainer">
+                <div id="knobRidgedRotationElement" style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;">
+                    <div class="knob-ridges"></div>
+                    <div class="knob-face">
+                        <div class="knob-pointer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="knob-container-spade hidden" id="knobSpadeContainer">
+                <div class="knob-base-disc"></div>
+                <div class="spade-pointer-body" id="knobSpadeRotationElement">
+                    <div class="indicator-groove"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // State variables tracking dynamic selections
+        let activeArcStyle = 'arrow';
+        let activeKnobStyle = 'ridged';
+        let currentKnobAngle = 45;
+
+        // Get references to HTML Control Form Inputs
+        const startInput = document.getElementById('startAngle');
+        const endInput = document.getElementById('endAngle');
+        const sizeInput = document.getElementById('arrowSize');
+        const tickInput = document.getElementById('tickCount');
+        const lengthInput = document.getElementById('tickLength');
+
+        // Text Display references
+        const startDisp = document.getElementById('startDisp');
+        const endDisp = document.getElementById('endDisp');
+        const sizeDisp = document.getElementById('sizeDisp');
+        const tickDisp = document.getElementById('tickDisp');
+        const lengthDisp = document.getElementById('lengthDisp');
+
+        // Dynamic element layout mappings
+        const arrowSizeGroup = document.getElementById('arrowSizeGroup');
+        const tickLengthGroup = document.getElementById('tickLengthGroup');
+        const arcPath = document.getElementById('arcPath');
+        const arrowMarker = document.getElementById('panel-arrow');
+        const ticksGroup = document.getElementById('ticksGroup');
+        const gaugeSvg = document.getElementById('gaugeSvg');
+
+        // Interactive interactive knob references
+        const knobRidgedContainer = document.getElementById('knobRidgedContainer');
+        const knobRidgedRotator = document.getElementById('knobRidgedRotationElement');
+        const knobSpadeContainer = document.getElementById('knobSpadeContainer');
+        const knobSpadeRotator = document.getElementById('knobSpadeRotationElement');
+        const canvasArea = document.getElementById('canvasArea');
+
+        const centerX = 130;
+        const centerY = 130;
+        let baseRadius = 78;
+
+        // Smooth translation wrapping negative values safely into a 0-360 range
+        function normalize360(deg) {
+            return ((deg % 360) + 360) % 360;
+        }
+
+        // Coordinate adjustments system: User 0 = Left side. Math 0 = Right side.
+        function customAngleToRadians(degree) {
+            let normalizedDegree = normalize360(degree);
+            let standardDegree = normalizedDegree + 180;
+            return (standardDegree * Math.PI) / 180;
+        }
+
+        // Tab selection controllers
+        function setArcStyle(style) {
+            activeArcStyle = style;
+            document.getElementById('btnArcArrow').classList.toggle('active', style === 'arrow');
+            document.getElementById('btnArcGlow').classList.toggle('active', style === 'glow');
+
+            if (style === 'arrow') {
+                arrowSizeGroup.classList.remove('hidden');
+                gaugeSvg.classList.add('arrow-arc-style');
+                arcPath.setAttribute('filter', '');
+                ticksGroup.setAttribute('filter', '');
+                arcPath.setAttribute('marker-end', 'url(#panel-arrow)');
+                baseRadius = 78;
+            } else {
+                arrowSizeGroup.classList.add('hidden');
+                gaugeSvg.classList.remove('arrow-arc-style');
+                arcPath.setAttribute('filter', 'url(#orange-glow)');
+                ticksGroup.setAttribute('filter', 'url(#orange-glow)');
+                arcPath.setAttribute('marker-end', '');
+                baseRadius = 80;
+            }
+            syncFromSliders();
+        }
+
+        function setKnobStyle(style) {
+            activeKnobStyle = style;
+            document.getElementById('btnKnobRidged').classList.toggle('active', style === 'ridged');
+            document.getElementById('btnKnobSpade').classList.toggle('active', style === 'spade');
+
+            if (style === 'ridged') {
+                knobRidgedContainer.classList.remove('hidden');
+                knobSpadeContainer.classList.add('hidden');
+            } else {
+                knobRidgedContainer.classList.add('hidden');
+                knobSpadeContainer.classList.remove('hidden');
+            }
+            updateKnobVisualRotation();
+        }
+
+        // Engine updating rendering passes
+        function updateGauge(startDeg, endDeg, arrowSize, ticks, currentTickLength) {
+            let finalLength = (activeArcStyle === 'arrow') ? 10 : currentTickLength;
+
+            if (activeArcStyle === 'arrow') {
+                arrowMarker.setAttribute("markerWidth", arrowSize);
+                arrowMarker.setAttribute("markerHeight", arrowSize);
+                tickLengthGroup.classList.add('hidden');
+            } else {
+                tickLengthGroup.classList.remove('hidden');
+            }
+
+            const startRad = customAngleToRadians(startDeg);
+            const endRad = customAngleToRadians(endDeg);
+
+            const x1 = centerX + baseRadius * Math.cos(startRad);
+            const y1 = centerY + baseRadius * Math.sin(startRad);
+            const x2 = centerX + baseRadius * Math.cos(endRad);
+            const y2 = centerY + baseRadius * Math.sin(endRad);
+
+            let normStart = normalize360(startDeg);
+            let normEnd = normalize360(endDeg);
+            let angleDiff = normEnd - normStart;
+            if (angleDiff < 0) angleDiff += 360;
+
+            const largeArcFlag = angleDiff > 180 ? 1 : 0;
+
+            if (angleDiff === 0 && startDeg !== endDeg) {
+                arcPath.setAttribute('d', `M ${centerX - baseRadius} ${centerY} A ${baseRadius} ${baseRadius} 0 1 1 ${centerX + baseRadius} ${centerY} A ${baseRadius} ${baseRadius} 0 1 1 ${centerX - baseRadius} ${centerY}`);
+            } else {
+                arcPath.setAttribute('d', `M ${x1} ${y1} A ${baseRadius} ${baseRadius} 0 ${largeArcFlag} 1 ${x2} ${y2}`);
+            }
+
+            // --- TICK REGENERATION LOOP ---
+            ticksGroup.innerHTML = "";
+            let generatedTicks = (activeArcStyle === 'arrow') ? ticks : ticks;
+            let tickLimitCondition = (activeArcStyle === 'arrow') ? (generatedTicks > 0) : (generatedTicks > 1);
+
+            if (tickLimitCondition) {
+                for (let i = 0; i < generatedTicks; i++) {
+                    let stepFactor = 0;
+                    if (activeArcStyle === 'arrow') {
+                        stepFactor = generatedTicks === 1 ? 0.5 : i / (generatedTicks - 1);
+                    } else {
+                        stepFactor = i / (generatedTicks - 1);
+                    }
+
+                    let currentDeg = startDeg + ((endDeg - startDeg) * stepFactor);
+                    let currentRad = customAngleToRadians(currentDeg);
+
+                    const innerX = centerX + baseRadius * Math.cos(currentRad);
+                    const innerY = centerY + baseRadius * Math.sin(currentRad);
+                    const outerX = centerX + (baseRadius + finalLength) * Math.cos(currentRad);
+                    const outerY = centerY + (baseRadius + finalLength) * Math.sin(currentRad);
+
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", innerX);
+                    line.setAttribute("y1", innerY);
+                    line.setAttribute("x2", outerX);
+                    line.setAttribute("y2", outerY);
+
+                    ticksGroup.appendChild(line);
+                }
+            }
+
+            // Ensure our active pointer interaction value remains locked inside current limits
+            clampKnobWithinBounds();
+        }
+
+        function updateKnobVisualRotation() {
+            // Re-map customized angle orientation to raw CSS rotate mapping (where 0 deg CSS is UP)
+            let cssRot = currentKnobAngle - 90;
+
+            knobRidgedRotator.style.transform = `rotate(${cssRot}deg)`;
+            knobSpadeRotator.style.transform = `translate(-50%, -50%) rotate(${cssRot}deg)`;
+        }
+
+        // Clamp knob interaction to within the defined Arc Range mathematically
+        function clampKnobWithinBounds() {
+            let startDeg = parseFloat(startInput.value);
+            let endDeg = parseFloat(endInput.value);
+
+            let normStart = normalize360(startDeg);
+            let normEnd = normalize360(endDeg);
+            let normCurrent = normalize360(currentKnobAngle);
+
+            let diffEndStart = normEnd - normStart;
+            if (diffEndStart < 0) diffEndStart += 360;
+
+            // Handle perfect full circles bypassing clamping
+            if (diffEndStart === 0 && startDeg !== endDeg) {
+                updateKnobVisualRotation();
+                return;
+            }
+
+            let diffCurrentStart = normCurrent - normStart;
+            if (diffCurrentStart < 0) diffCurrentStart += 360;
+
+            if (diffCurrentStart > diffEndStart) {
+                // Determine closer boundary edge to safely snap target value down to
+                let distToStart = 360 - diffCurrentStart;
+                let distToEnd = diffCurrentStart - diffEndStart;
+
+                if (distToStart < distToEnd) {
+                    currentKnobAngle = startDeg;
+                } else {
+                    currentKnobAngle = endDeg;
+                }
+            }
+            updateKnobVisualRotation();
+        }
+
+        function syncFromSliders() {
+            const start = parseFloat(startInput.value);
+            const end = parseFloat(endInput.value);
+            const size = parseInt(sizeInput.value);
+            const ticks = parseInt(tickInput.value);
+            const length = parseInt(lengthInput.value);
+
+            startDisp.value = start;
+            endDisp.value = end;
+            sizeDisp.value = size;
+            tickDisp.value = ticks;
+            lengthDisp.value = length;
+
+            updateGauge(start, end, size, ticks, length);
+        }
+
+        function syncFromInputs() {
+            const start = isNaN(parseFloat(startDisp.value)) ? 0 : parseFloat(startDisp.value);
+            const end = isNaN(parseFloat(endDisp.value)) ? 0 : parseFloat(endDisp.value);
+            const size = isNaN(parseInt(sizeDisp.value)) ? 3 : parseInt(sizeDisp.value);
+            const ticks = isNaN(parseInt(tickDisp.value)) ? 0 : parseInt(tickDisp.value);
+            const length = isNaN(parseInt(lengthDisp.value)) ? 2 : parseInt(lengthDisp.value);
+
+            startInput.value = start;
+            endInput.value = end;
+            sizeInput.value = size;
+            tickInput.value = ticks;
+            lengthInput.value = length;
+
+            updateGauge(start, end, size, ticks, length);
+        }
+
+        // --- MOUSE & TOUCH EVENT INTERACTION ENGINE ---
+        let isDraggingKnob = false;
+
+        function handlePointerMove(e) {
+            if (!isDraggingKnob) return;
+
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            if (!clientX || !clientY) return;
+
+            let activeContainer = (activeKnobStyle === 'ridged') ? knobRidgedContainer : knobSpadeContainer;
+            let rect = activeContainer.getBoundingClientRect();
+            let kCenterX = rect.left + rect.width / 2;
+            let kCenterY = rect.top + rect.height / 2;
+
+            let deltaX = clientX - kCenterX;
+            let deltaY = clientY - kCenterY;
+
+            // Math.atan2 native output (0 is Right)
+            let rad = Math.atan2(deltaY, deltaX);
+            let mathDeg = rad * (180 / Math.PI);
+
+            // Map Math Output (+0 Right) to Custom Settings Orientation (+0 Left)
+            let userDeg = mathDeg + 180;
+            currentKnobAngle = normalize360(userDeg);
+
+            clampKnobWithinBounds();
+        }
+
+        function startDrag(e) {
+            if (e.button && e.button !== 0) return;
+            isDraggingKnob = true;
+            window.addEventListener('mousemove', handlePointerMove);
+            window.addEventListener('mouseup', stopDrag);
+            window.addEventListener('touchmove', handlePointerMove, {
+                passive: false
+            });
+            window.addEventListener('touchend', stopDrag);
+            handlePointerMove(e);
+        }
+
+        function stopDrag() {
+            isDraggingKnob = false;
+            window.removeEventListener('mousemove', handlePointerMove);
+            window.removeEventListener('mouseup', stopDrag);
+            window.removeEventListener('touchmove', handlePointerMove);
+            window.removeEventListener('touchend', stopDrag);
+        }
+
+        knobRidgedContainer.addEventListener('mousedown', startDrag);
+        knobRidgedContainer.addEventListener('touchstart', startDrag, {
+            passive: false
+        });
+        knobSpadeContainer.addEventListener('mousedown', startDrag);
+        knobSpadeContainer.addEventListener('touchstart', startDrag, {
+            passive: false
+        });
+
+        startInput.addEventListener('input', syncFromSliders);
+        endInput.addEventListener('input', syncFromSliders);
+        sizeInput.addEventListener('input', syncFromSliders);
+        tickInput.addEventListener('input', syncFromSliders);
+        lengthInput.addEventListener('input', syncFromSliders);
+
+        startDisp.addEventListener('input', syncFromInputs);
+        endDisp.addEventListener('input', syncFromInputs);
+        sizeDisp.addEventListener('input', syncFromInputs);
+        tickDisp.addEventListener('input', syncFromInputs);
+        lengthDisp.addEventListener('input', syncFromInputs);
+
+        setArcStyle('arrow');
+        setKnobStyle('ridged');
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>MSFS MobiFlight Panel Builder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=B612&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="builder-controls">
+        <div class="control-group">
+            <label>Switch Type:</label>
+            <select id="switchStyle">
+                <option value="tggs1-l1">TGGS1 - Lever 1 (Light Round)</option>
+                <option value="tggs1-l2">TGGS1 - Lever 2 (Orange Bar)</option>
+                <option value="tggs1-l3">TGGS1 - Lever 3 (Orange Pill)</option>
+                <option value="tggs1-l4">TGGS1 - Lever 4 (Black Square + Label)</option>
+                <option value="tggs2-t1">TGGS2 - Type 1 (Orange/Light)</option>
+                <option value="tggs2-t2">TGGS2 - Type 2 (Dark/Dark)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Label (For TGGS1-L4):</label>
+            <input type="text" id="switchLabel" value="ENG 1" placeholder="e.g. ENG 1">
+        </div>
+
+        <div class="control-group">
+            <label>Orientation:</label>
+            <select id="switchOrientation">
+                <option value="vertical">Vertical (Up/Down)</option>
+                <option value="horizontal">Horizontal (Left/Right)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label>Positions:</label>
+            <input type="number" id="switchPositions" value="2" min="2" max="10">
+        </div>
+
+        <div class="control-group">
+            <label>Travel (px):</label>
+            <input type="number" id="switchTravel" value="50" min="10" max="300">
+        </div>
+
+        <button id="addSwitchBtn">Add Switch</button>
+    </div>
+
+    <div id="panelCanvas" class="panel-container"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

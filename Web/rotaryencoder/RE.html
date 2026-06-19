@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A320 Encoder Knob</title>
+
+    <style>
+        body {
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            user-select: none;
+        }
+        
+        .wrapper {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+        }
+        /* 1. Outer Ring / Panel Support */
+        
+        .BackSupport {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: #2b2b2b;
+            border: 3px solid #FFA500;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        /* 2. Larger Outer/Lower Encoder Knob */
+        
+        .Backknob {
+            width: 105px;
+            height: 105px;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: repeating-conic-gradient(from 0deg, #808080 0deg 4deg, #707070 4deg 8deg);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6);
+            cursor: grab;
+            touch-action: none;
+            will-change: transform;
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+            z-index: 1;
+            /* Places it under the front knob interaction layer */
+        }
+        /* FIX: Invisible hitbox extension for the Backknob. 
+           This expands its clickable target area outward to the orange border. */
+        
+        .Backknob::before {
+            content: "";
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: transparent;
+        }
+        
+        .Backknob:active {
+            cursor: grabbing;
+        }
+        
+        .Backknob.disabled {
+            background: #2b2b2b;
+            box-shadow: none;
+            cursor: default;
+        }
+        /* Disables the extended invisible hitbox when dual mode is off */
+        
+        .Backknob.disabled::before {
+            display: none;
+        }
+        /* 3. Smaller Inner/Upper Encoder Knob */
+        
+        .Frontknob {
+            width: 90px;
+            height: 90px;
+            position: relative;
+            border-radius: 50%;
+            background: repeating-conic-gradient(from 0deg, #f8f8f8 0deg 4deg, #cfcfcf 4deg 8deg);
+            cursor: grab;
+            touch-action: none;
+            will-change: transform;
+            z-index: 2;
+            /* Ensures the front knob interaction stays completely independent on top */
+        }
+        
+        .Frontknob:active {
+            cursor: grabbing;
+        }
+        
+        .Frontknob::before {
+            content: "";
+            position: absolute;
+            width: 75px;
+            height: 75px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgb(230, 230, 230);
+            border-radius: 50%;
+            border: 3px solid white;
+        }
+        
+        .Frontknob::after {
+            content: "";
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgb(243, 243, 243);
+            border: 3px solid white;
+        }
+        /* Control Tab Styling */
+        
+        .control-panel {
+            background: #1c1c1c;
+            border: 2px solid #333;
+            padding: 20px;
+            border-radius: 8px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .control-panel h3 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            letter-spacing: 1px;
+            color: #FFA500;
+            text-transform: uppercase;
+        }
+        
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #444;
+            transition: .3s;
+            border-radius: 22px;
+        }
+        
+        .slider::before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        
+        input:checked+.slider {
+            background-color: #FFA500;
+        }
+        
+        input:checked+.slider::before {
+            transform: translateX(22px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="wrapper">
+        <div class="BackSupport" id="backSupport">
+            <div class="Backknob" id="backknob">
+                <div class="Frontknob" id="frontknob"></div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <h3>Options</h3>
+            <label class="toggle-container">
+                <div class="switch">
+                    <input type="checkbox" id="dualEncoderToggle" checked>
+                    <span class="slider"></span>
+                </div>
+                <span id="toggleLabel">Dual Encoder: ON</span>
+            </label>
+        </div>
+    </div>
+
+    <script>
+        const backknob = document.getElementById('backknob');
+        const frontknob = document.getElementById('frontknob');
+        const toggle = document.getElementById('dualEncoderToggle');
+        const toggleLabel = document.getElementById('toggleLabel');
+
+        let isDualEnabled = true;
+
+        let rotationData = {
+            front: {
+                current: 0,
+                startAngle: 0,
+                base: 0
+            },
+            back: {
+                current: 0,
+                startAngle: 0,
+                base: 0
+            }
+        };
+
+        let activeKnob = null;
+
+        function getAngle(clientX, clientY, element) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            return Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+        }
+
+        function handleStart(e, type, element) {
+            if (!isDualEnabled && type === 'back') return;
+
+            // FIX: Explicitly check if the user clicked the front knob. 
+            // If they did, stop the back knob listener from hijacking the event.
+            if (type === 'back' && frontknob.contains(e.target)) return;
+
+            e.preventDefault();
+            activeKnob = type;
+
+            const pointer = e.touches ? e.touches[0] : e;
+            rotationData[type].startAngle = getAngle(pointer.clientX, pointer.clientY, element);
+            rotationData[type].base = rotationData[type].current;
+
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+            document.addEventListener('touchmove', handleMove, {
+                passive: false
+            });
+            document.addEventListener('touchend', handleEnd);
+        }
+
+        function handleMove(e) {
+            if (!activeKnob) return;
+
+            const element = activeKnob === 'front' ? frontknob : backknob;
+            const pointer = e.touches ? e.touches[0] : e;
+            const currentAngle = getAngle(pointer.clientX, pointer.clientY, element);
+
+            let angleDiff = currentAngle - rotationData[activeKnob].startAngle;
+            rotationData[activeKnob].current = rotationData[activeKnob].base + angleDiff;
+
+            updateTransforms();
+        }
+
+        function updateTransforms() {
+            backknob.style.transform = `rotate(${rotationData.back.current}deg)`;
+            let absoluteFrontRotation = rotationData.front.current - rotationData.back.current;
+            frontknob.style.transform = `rotate(${absoluteFrontRotation}deg)`;
+        }
+
+        function handleEnd() {
+            activeKnob = null;
+            document.removeEventListener('mousemove', handleMove);
+            document.removeEventListener('mouseup', handleEnd);
+            document.removeEventListener('touchmove', handleMove);
+            document.removeEventListener('touchend', handleEnd);
+        }
+
+        frontknob.addEventListener('mousedown', (e) => handleStart(e, 'front', frontknob));
+        frontknob.addEventListener('touchstart', (e) => handleStart(e, 'front', frontknob));
+
+        backknob.addEventListener('mousedown', (e) => handleStart(e, 'back', backknob));
+        backknob.addEventListener('touchstart', (e) => handleStart(e, 'back', backknob));
+
+        toggle.addEventListener('change', (e) => {
+            isDualEnabled = e.target.checked;
+            if (isDualEnabled) {
+                backknob.classList.remove('disabled');
+                toggleLabel.textContent = "Dual Encoder: ON";
+            } else {
+                backknob.classList.add('disabled');
+                toggleLabel.textContent = "Dual Encoder: OFF";
+                rotationData.back.current = 0;
+                updateTransforms();
+            }
+        });
+    </script>
+</body>
+
+</html>

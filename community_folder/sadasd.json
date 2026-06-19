@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "savedAt": "2026-06-17T18:39:44.949Z",
+  "layers": [
+    {
+      "id": "layer-1781721569919-0.6894655905458421",
+      "name": "Main Panel",
+      "compIdCounter": 0,
+      "zCounter": 11,
+      "compCount": 1,
+      "autoView": true,
+      "savedZoom": 1,
+      "savedPanX": 0,
+      "savedPanY": 0,
+      "components": [
+        {
+          "id": "comp-mqif0und-tdesd",
+          "type": "display",
+          "left": "100px",
+          "top": "100px",
+          "zIndex": "11",
+          "data": {
+            "width": 200,
+            "height": 120,
+            "shape": "rectangle",
+            "bgColor": "#111111",
+            "borderColor": "#444444",
+            "borderWidth": 2,
+            "staticText": "DISPLAY",
+            "fontSize": 16,
+            "fontWeight": "normal",
+            "fontStyle": "normal",
+            "fontFamily": "B612, sans-serif",
+            "textColor": "#cccccc",
+            "valueRpn": "",
+            "transformCode": "",
+            "backlightRpn": "",
+            "backlightMin": 0,
+            "backlightMax": 100,
+            "backlightOnColor": "#FFA500",
+            "backlightOffColor": "#2a2a2a"
+          }
+        }
+      ]
+    }
+  ],
+  "grid": {
+    "rows": 2,
+    "cols": 2,
+    "cells": {}
+  },
+  "sidebarWidth": 280
+}

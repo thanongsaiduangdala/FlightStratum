@@ -1,0 +1,3 @@
+6.813102959611926 the house is 6.813102959611926 or 1/0.146776 smaller then the origaner mesh
+
+166.6666666666667 the onechan is 1/0.006 smaller then the original mesh
