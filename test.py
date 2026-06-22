@@ -47,22 +47,70 @@ async def lifespan(app: FastAPI):
     loop = asyncio.get_event_loop()
     loop.set_exception_handler(_quiet_proactor_exception_handler)
 
-    try:
-        sm = SimConnectMobiFlight()
-        mf = MobiFlightVariableRequests(sm)
-        mf.clear_sim_variables()
-        await asyncio.sleep(1.5)
-        mf.get("(A:AIRSPEED INDICATED, Knots)")
-        print("Data link established and pipeline warmed.")
-    except Exception as e:
-        print(f"Connection failed: {e}")
+    async def try_connect_sim():
+        global sm, mf
+        try:
+
+            def _connect():
+                local_sm = SimConnectMobiFlight()
+                local_mf = MobiFlightVariableRequests(local_sm)
+                local_mf.clear_sim_variables()
+                return local_sm, local_mf
+
+            sm, mf = await asyncio.wait_for(
+                asyncio.to_thread(_connect), timeout=5.0
+            )
+            await asyncio.sleep(1.5)
+            mf.get("(A:AIRSPEED INDICATED, Knots)")
+            print("Data link established and pipeline warmed.")
+        except Exception as e:
+            sm, mf = None, None
+            print(f"Connection failed (will retry in background): {e}")
+
+    async def check_sim_alive():
+        """Health-check the existing connection. python-SimConnect's dispatch
+        thread sets sm.quit = 1 (and sm.ok = False) the moment it receives
+        MSFS's SIMCONNECT_RECV_ID_QUIT message, so check those flags
+        directly instead of relying on a data read that may just return a
+        stale/cached value without ever raising."""
+        global sm, mf
+        dead = False
+        try:
+            if sm is None:
+                dead = True
+            elif getattr(sm, "quit", 0):
+                dead = True
+            elif not getattr(sm, "ok", True):
+                dead = True
+        except Exception:
+            dead = True
+
+        if dead:
+            print("Lost connection to sim (MSFS closed or SimConnect dropped).")
+            try:
+                if sm:
+                    sm.exit()
+            except Exception:
+                pass
+            sm, mf = None, None
+
+    async def connect_loop():
+        while True:
+            if mf is None:
+                await try_connect_sim()
+            else:
+                await check_sim_alive()
+            await asyncio.sleep(5)
+
+    connect_task = asyncio.create_task(connect_loop())
 
     yield
 
+    connect_task.cancel()
     if sm:
         sm.exit()
 
-app = FastAPI(lifespan=lifespan)  # ← only one definition, with lifespan attached
+app = FastAPI(lifespan=lifespan)
 
 app.mount("/fonts", StaticFiles(directory="fonts"), name="fonts")
 
@@ -140,9 +188,25 @@ async def websocket_endpoint(websocket: WebSocket):
 
     local_registered_outputs: dict[str, float] = {}
     last_values: dict[str, float] = {}
+    last_sim_status = None 
 
     if mf:
         mf.clear_sim_variables()
+
+    async def push_sim_status():
+        nonlocal last_sim_status
+        while True:
+            try:
+                is_connected = mf is not None
+                if is_connected != last_sim_status:
+                    last_sim_status = is_connected
+                    await websocket.send_text(json.dumps({
+                        "type": "SIM_STATUS",
+                        "connected": is_connected
+                    }))
+            except Exception:
+                break
+            await asyncio.sleep(1.0)
 
     async def push_updates():
         while True:
@@ -163,6 +227,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 break
             await asyncio.sleep(0.2)
 
+    status_task = asyncio.create_task(push_sim_status())
     update_task = asyncio.create_task(push_updates())
 
     try:
@@ -186,6 +251,7 @@ async def websocket_endpoint(websocket: WebSocket):
         print("WebSocket client disconnected.")
     finally:
         update_task.cancel()
+        status_task.cancel()
 
 def get_base_dir():
     if getattr(sys, 'frozen', False):

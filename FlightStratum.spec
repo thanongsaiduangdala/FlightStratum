@@ -4,7 +4,7 @@
 a = Analysis(
     ['gui.py'],
     pathex=[],
-    binaries=[('C:\\FSUIPCPythonConnect\\.venv\\Lib\\site-packages\\SimConnect\\SimConnect.dll', 'SimConnect')],
+    binaries=[('C:\\FlightStratumGitHub\\.venv\\Lib\\site-packages\\SimConnect\\SimConnect.dll', 'SimConnect')],
     datas=[],
     hiddenimports=[],
     hookspath=[],

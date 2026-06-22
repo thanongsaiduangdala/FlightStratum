@@ -1,1 +1,1 @@
-pyinstaller --onefile --noconsole --name FlightStratum --icon=flight_stratum_icon_only.ico --add-binary "C:\FSUIPCPythonConnect\.venv\Lib\site-packages\SimConnect\SimConnect.dll;SimConnect" gui.py
+pyinstaller --onefile --noconsole --name FlightStratum --icon=flight_stratum_icon_only.ico --add-binary "C:\FlightStratumGitHub\.venv\Lib\site-packages\SimConnect\SimConnect.dll;SimConnect" gui.py

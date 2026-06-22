@@ -659,6 +659,13 @@
             background: #f44336;
         }
         
+        #interactModeBtn:disabled,
+        #interactModeBtn.sim-disconnected {
+            opacity: .4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
         #zoom-controls {
             position: fixed;
             bottom: 24px;
@@ -2703,6 +2710,7 @@
 
             <div id="ws-status">
                 <div id="ws-dot"></div><span id="ws-label">Sim</span>
+                <button id="ws-reload-btn" style="display:none;font-size:9px;letter-spacing:1px;text-transform:uppercase;background:#2a1414;border:1px solid #5a2a2a;color:#f44336;border-radius:3px;padding:3px 8px;cursor:pointer;margin-left:4px;">⟳ Reload</button>
                 <span id="ls-status" style="font-size:9px;color:#4c9;letter-spacing:1px;padding:4px 10px;display:block;"></span>
 
             </div>
@@ -3956,13 +3964,33 @@
             }
         }
 
+        var simConnected = false;
+
+        function setSimDisconnectedUI() {
+            simConnected = false;
+            document.getElementById('ws-status').className = 'error';
+            document.getElementById('ws-label').textContent = 'SIMDISCONNECTED';
+            document.getElementById('ws-reload-btn').style.display = 'inline-block';
+            document.getElementById('interactModeBtn').disabled = true;
+            document.getElementById('interactModeBtn').classList.add('sim-disconnected');
+            if (currentMode === 'interact') setMode('edit');
+        }
+
+        function setSimConnectedUI() {
+            simConnected = true;
+            document.getElementById('ws-status').className = 'connected';
+            document.getElementById('ws-label').textContent = 'SimConnect';
+            document.getElementById('ws-reload-btn').style.display = 'none';
+            document.getElementById('interactModeBtn').disabled = false;
+            document.getElementById('interactModeBtn').classList.remove('sim-disconnected');
+        }
+
         function wsConnect() {
             try {
                 ws = new WebSocket(`ws://${location.hostname}:${WS_PORT}/ws`);
                 ws.onopen = function() {
-                    document.getElementById('ws-status').className = 'connected';
-                    document.getElementById('ws-label').textContent = 'SimConnect';
-
+                    document.getElementById('ws-status').className = '';
+                    document.getElementById('ws-label').textContent = 'Checking...';
 
                     Object.keys(outputWatchers).forEach(function(rpn) {
                         if (outputWatchers[rpn].length) {
@@ -3986,23 +4014,31 @@
                     });
                 };
                 ws.onclose = function() {
-                    document.getElementById('ws-status').className = '';
-                    document.getElementById('ws-label').textContent = 'Sim';
+                    setSimDisconnectedUI();
                     setTimeout(wsConnect, 3000);
                 };
                 ws.onerror = function() {
-                    document.getElementById('ws-status').className = 'error';
+                    setSimDisconnectedUI();
                 };
                 ws.onmessage = function(ev) {
                     try {
                         var msg = JSON.parse(ev.data);
                         if (msg.type === 'WASM_UPDATE') handleWasmUpdate(msg.rpn, msg.value);
+                        else if (msg.type === 'SIM_STATUS') {
+                            if (msg.connected) setSimConnectedUI();
+                            else setSimDisconnectedUI();
+                        }
                     } catch (e) {}
                 };
             } catch (e) {
+                setSimDisconnectedUI();
                 setTimeout(wsConnect, 3000);
             }
         }
+
+        document.getElementById('ws-reload-btn').addEventListener('click', function() {
+            location.reload();
+        });
         var lastMouseX = 0,
             lastMouseY = 0;
         document.addEventListener('mousemove', function(e) {
@@ -5395,6 +5431,7 @@
             setMode('edit');
         });
         document.getElementById('interactModeBtn').addEventListener('click', function() {
+            if (!simConnected) return;
             setMode('interact');
         });
 
